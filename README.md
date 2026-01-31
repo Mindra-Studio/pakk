@@ -640,7 +640,6 @@ pakk({
 ## Roadmap
 
 ### Phase 1: pakk bundle (v1.0) - EN COURS
-> **Hook viral:** *"-20% sur ton bundle, une ligne de config"*
 
 - [x] Core compressor avec ZSTD + dictionnaires pré-entraînés
 - [x] 13 dictionnaires optimisés (JS, React, CSS, HTML, JSON, Go, Python, Rust, C, C++...)
@@ -661,7 +660,6 @@ pakk({
 | Next.js 16 + Turbopack | 28 | 4.04 MB | 1.05 MB | **-74%** |
 
 ### Phase 2: pakk git (v1.5)
-> **Hook:** *"Ton repo de 2GB → 800MB"*
 
 ```bash
 $ pakk git optimize
@@ -669,7 +667,7 @@ Analyzing .git/objects...
 Repacking with ZSTD dictionaries...
 
 Before: 2.1 GB
-After:  847 MB (-60%)
+After:  546 MB (-74%)
 ```
 
 - [ ] Commande `pakk git optimize`
@@ -679,7 +677,6 @@ After:  847 MB (-60%)
 - [ ] Intégration GitHub Actions
 
 ### Phase 3: pakk install (v2.0)
-> **Hook:** *"Bun + PAKK = ultimate combo"*
 
 ```bash
 $ pakk install lodash
@@ -687,11 +684,10 @@ Downloading lodash@4.17.21...
 Cache hit! Decompressing with dictionary...
 
 npm:  2.3s (download 1.2MB)
-pakk: 0.4s (download 340KB, cached dict)
+pakk: 0.4s (download 312KB, cached dict)
 ```
 
 - [ ] Cache npm intelligent avec dictionnaires par écosystème
-- [ ] Complémentaire à Bun (compression > vitesse I/O)
 - [ ] Dictionnaires pré-entraînés pour top 1000 packages npm
 - [ ] `pakk install <package>` - drop-in replacement
 - [ ] Intégration native avec pnpm/yarn/bun
