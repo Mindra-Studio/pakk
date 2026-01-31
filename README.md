@@ -69,10 +69,24 @@ Entraîné sur **1.7GB de vrais projets GitHub** (Next.js, Uniswap, Cal.com, Aav
 
 | Algorithme | Three.js compressé | Temps | Vitesse vs Brotli |
 |------------|-------------------|-------|-------------------|
-| **PAKK** | 117.3 KB | 164ms | **5.8x plus rapide** |
-| Brotli-11 | 132.2 KB | 955ms | baseline |
+| **PAKK** | 127.0 KB | 22ms | **10x plus rapide** |
+| Brotli-11 | 132.2 KB | 220ms | baseline |
 | gzip-9 | 163.3 KB | 18ms | - |
 | zstd-19 | 169.2 KB | 3ms | - |
+
+### Pourquoi PAKK et pas juste ZSTD ?
+
+**ZSTD seul ne bat pas Brotli sur le code web.** Les dictionnaires font toute la différence :
+
+| Algorithme | Total (6 fichiers) | vs Brotli |
+|------------|-------------------|-----------|
+| gzip-9 | 434 KB | -20% |
+| **Brotli-11** | 362 KB | baseline |
+| ZSTD-19 | 453 KB | **-25%** ❌ |
+| **PAKK** | 309 KB | **+15%** ✅ |
+
+Sans dictionnaire, ZSTD perd face à Brotli (-25%).
+Avec les dictionnaires PAKK, on gagne (+15%) tout en étant **11x plus rapide**.
 
 ---
 
@@ -141,7 +155,7 @@ const compressed = await compress(buffer, {
 | `vue` | 52 KB | Applications Vue/Nuxt |
 | `typescript` | 201 KB | Code source TypeScript |
 | `html` | 359 KB | Documents HTML |
-| `css` | 367 KB | Feuilles de style CSS/SCSS |
+| `css` | 512 KB | Feuilles de style CSS/SCSS |
 | `json` | 258 KB | Fichiers de données JSON |
 | `go` | 512 KB | Code source Go |
 | `rust` | 379 KB | Code source Rust |
