@@ -1,11 +1,11 @@
 # PAKK
 
-**Compression nouvelle génération qui bat Brotli**
+**ZSTD + Dictionnaires pré-entraînés pour assets web**
 
 [![npm version](https://img.shields.io/npm/v/pakk.svg)](https://www.npmjs.com/package/pakk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-PAKK utilise **ZSTD avec des dictionnaires pré-entraînés** pour obtenir des ratios de compression qui battent systématiquement Brotli-11 de **7-45%** tout en étant **5-7x plus rapide**.
+PAKK combine ZSTD avec des dictionnaires spécialisés entraînés sur 1.7GB de code open source. Résultat : **15% plus compact que Brotli, 11x plus rapide**.
 
 ```bash
 npm install pakk
@@ -13,100 +13,74 @@ npm install pakk
 
 ---
 
-## Table des matières
+## Benchmarks
 
-1. [Résultats des benchmarks](#résultats-des-benchmarks)
-2. [Comment ça marche](#comment-ça-marche)
-3. [Démarrage rapide](#démarrage-rapide)
-4. [Dictionnaires disponibles](#dictionnaires-disponibles)
-5. [Dossier d'entraînement (pakk-entrainement)](#dossier-dentraînement-pakk-entrainement)
-6. [Entraîner vos dictionnaires](#entraîner-vos-dictionnaires)
-7. [Mettre à jour les dictionnaires](#mettre-à-jour-les-dictionnaires)
-8. [Plugins Build Tools](#plugins-build-tools)
-9. [Configuration serveur](#configuration-serveur)
-10. [Support navigateur](#support-navigateur)
-11. [Roadmap](#roadmap)
-12. [FAQ](#faq)
-13. [Contribuer](#contribuer)
+### Comparaison complète (6 fichiers, 1.55 MB)
+
+| Algorithme | Taille compressée | Ratio | Temps | vs Brotli |
+|------------|-------------------|-------|-------|-----------|
+| gzip-9 | 434.0 KB | 27.3% | 18ms | -20% |
+| **Brotli-11** | 362.3 KB | 22.8% | 2275ms | baseline |
+| ZSTD-19 | 453.0 KB | 28.5% | 12ms | -25% |
+| **PAKK** | **308.7 KB** | **19.4%** | **201ms** | **+15%** |
+
+### Détail par fichier
+
+| Fichier | Original | gzip-9 | Brotli-11 | ZSTD-19 | PAKK |
+|---------|----------|--------|-----------|---------|------|
+| jquery.min.js | 85.5 KB | 29.6 KB | 26.8 KB | 31.5 KB | **15.8 KB** |
+| d3.min.js | 273.1 KB | 91.0 KB | 75.8 KB | 93.6 KB | **60.2 KB** |
+| three.min.js | 654.2 KB | 163.3 KB | 132.2 KB | 169.2 KB | **127.0 KB** |
+| vue.global.prod.js | 143.7 KB | 52.3 KB | 46.7 KB | 54.8 KB | **42.4 KB** |
+| bootstrap.min.css | 227.5 KB | 29.9 KB | 22.2 KB | 33.6 KB | **19.5 KB** |
+| chart.min.js | 200.3 KB | 67.8 KB | 58.7 KB | 70.3 KB | **43.8 KB** |
+
+### Gain par fichier vs Brotli-11
+
+| Fichier | PAKK vs Brotli |
+|---------|----------------|
+| jquery.min.js | **+41%** |
+| chart.min.js | **+25%** |
+| d3.min.js | **+21%** |
+| bootstrap.min.css | **+12%** |
+| vue.global.prod.js | **+9%** |
+| three.min.js | **+4%** |
+
+### Observation clé
+
+ZSTD seul (sans dictionnaire) est **25% moins efficace** que Brotli sur du code web.
+La valeur de PAKK vient des **dictionnaires pré-entraînés**, pas de ZSTD lui-même.
 
 ---
 
-## Résultats des benchmarks
+## Table des matières
 
-Entraîné sur **1.7GB de vrais projets GitHub** (Next.js, Uniswap, Cal.com, Aave, RainbowKit, wagmi, viem, shadcn-ui, CPython, Go stdlib, ripgrep).
-
-### JavaScript (Bundles minifiés)
-
-| Fichier | Original | PAKK | Brotli-11 | Gain PAKK |
-|---------|----------|------|-----------|-----------|
-| jQuery 3.7 | 87 KB | **14.8 KB** | 26.8 KB | **+45%** |
-| D3.js 7.8 | 273 KB | **55.4 KB** | 75.8 KB | **+27%** |
-| Vue 3.4 | 158 KB | **31.9 KB** | 51.3 KB | **+38%** |
-| Chart.js 4.4 | 205 KB | **40.7 KB** | 58.7 KB | **+31%** |
-| Three.js r160 | 654 KB | **117.3 KB** | 132.2 KB | **+11%** |
-| Ethers.js 6.9 | 510 KB | **117.1 KB** | 131.7 KB | **+11%** |
-
-### Assets Web (HTML/CSS/JSON)
-
-| Type | Original | PAKK | Brotli-11 | Gain PAKK |
-|------|----------|------|-----------|-----------|
-| React TSX Component | 23 KB | **3.2 KB** | 3.8 KB | **+17%** |
-| HTML (flags index) | 82 KB | **4.3 KB** | 4.8 KB | **+10%** |
-| Bootstrap CSS | 274 KB | **22.3 KB** | 24.0 KB | **+7%** |
-| FontAwesome CSS | 137 KB | **15.1 KB** | 19.2 KB | **+21%** |
-| JSON i18n | 298 KB | **62.2 KB** | 64.0 KB | **+3%** |
-
-### Langages de programmation
-
-| Langage | Original | PAKK | Brotli-11 | Gain PAKK |
-|---------|----------|------|-----------|-----------|
-| Go | 24 KB | **5.3 KB** | 7.0 KB | **+24%** |
-| C | 94 KB | **14.9 KB** | 17.4 KB | **+14%** |
-| Python | 32 KB | **8.4 KB** | 9.1 KB | **+8%** |
-| Rust | 82 KB | **9.3 KB** | 10.1 KB | **+7%** |
-
-### Comparaison de vitesse
-
-| Algorithme | Three.js compressé | Temps | Vitesse vs Brotli |
-|------------|-------------------|-------|-------------------|
-| **PAKK** | 127.0 KB | 22ms | **10x plus rapide** |
-| Brotli-11 | 132.2 KB | 220ms | baseline |
-| gzip-9 | 163.3 KB | 18ms | - |
-| zstd-19 | 169.2 KB | 3ms | - |
-
-### Pourquoi PAKK et pas juste ZSTD ?
-
-**ZSTD seul ne bat pas Brotli sur le code web.** Les dictionnaires font toute la différence :
-
-| Algorithme | Total (6 fichiers) | vs Brotli |
-|------------|-------------------|-----------|
-| gzip-9 | 434 KB | -20% |
-| **Brotli-11** | 362 KB | baseline |
-| ZSTD-19 | 453 KB | **-25%** ❌ |
-| **PAKK** | 309 KB | **+15%** ✅ |
-
-Sans dictionnaire, ZSTD perd face à Brotli (-25%).
-Avec les dictionnaires PAKK, on gagne (+15%) tout en étant **11x plus rapide**.
+1. [Comment ça marche](#comment-ça-marche)
+2. [Démarrage rapide](#démarrage-rapide)
+3. [Dictionnaires disponibles](#dictionnaires-disponibles)
+4. [Plugins Build Tools](#plugins-build-tools)
+5. [Configuration serveur](#configuration-serveur)
+6. [Entraîner vos dictionnaires](#entraîner-vos-dictionnaires)
+7. [Roadmap](#roadmap)
+8. [FAQ](#faq)
 
 ---
 
 ## Comment ça marche
 
-Les algorithmes de compression standard construisent des dictionnaires à partir du fichier d'entrée lui-même. C'est inefficace pour les bundles web car :
+Les algorithmes de compression (gzip, Brotli, ZSTD) construisent un modèle statistique à partir des données d'entrée. Sur des fichiers volumineux, c'est efficace. Sur des bundles web typiques (< 1MB), le modèle n'a pas assez de données pour atteindre son potentiel.
 
-1. **Patterns similaires partout** - Les hooks React, JSX, le boilerplate webpack apparaissent dans chaque bundle
-2. **Pénalité de démarrage à froid** - Les petits fichiers n'ont pas assez de données pour apprendre les patterns
-3. **Octets gaspillés** - Chaque fichier redécouvre les mêmes patterns
-
-**Solution PAKK :** Pré-entraîner des dictionnaires sur des millions de lignes de vrai code, puis partager cette connaissance pour toutes les compressions.
+PAKK utilise des **dictionnaires pré-entraînés** : le modèle statistique est construit à l'avance sur 1.7GB de code open source (Next.js, React, Vue, Bootstrap, etc.). Le compresseur démarre avec une connaissance des patterns fréquents dans le code web.
 
 ```
-Traditionnel:  [Votre Bundle] → [Apprendre Patterns] → [Compresser] → Sortie
-PAKK:          [Dictionnaire Pré-entraîné] + [Votre Bundle] → [Compresser] → Sortie
-                     ↑
-              Entraîné sur 1.7GB de
-              vrais projets GitHub
+Standard:  [Fichier] → [Construire modèle] → [Compresser] → Sortie
+PAKK:      [Dictionnaire] + [Fichier] → [Compresser] → Sortie
+                ↑
+         Modèle pré-entraîné sur
+         1.7GB de code réel
 ```
+
+Sources de données d'entraînement : Next.js, Cal.com, Uniswap, shadcn-ui, wagmi, viem, RainbowKit, CPython, Go stdlib, ripgrep.
 
 ---
 
