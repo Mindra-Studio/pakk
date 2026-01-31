@@ -646,12 +646,19 @@ pakk({
 - [x] 13 dictionnaires optimisés (JS, React, CSS, HTML, JSON, Go, Python, Rust, C, C++...)
 - [x] CLI: `pakk compress`, `pakk benchmark`, `pakk info`
 - [x] Plugin Vite - fonctionnel
-- [x] Plugin Next.js - fonctionnel
+- [x] Plugin Next.js - fonctionnel (compatible Turbopack)
 - [x] Plugin Webpack - fonctionnel
 - [x] Plugins esbuild, Rollup, Parcel
-- [ ] Tests E2E sur vrais projets
+- [x] Tests E2E sur vrais projets
 - [ ] Publication npm
 - [ ] Landing page avec démo interactive
+
+#### Résultats E2E sur vrais projets
+
+| Stack | Fichiers | Avant | Après | Gain |
+|-------|----------|-------|-------|------|
+| Vite + React + Web3 | 84 | 3.22 MB | 863 KB | **-74%** |
+| Next.js 16 + Turbopack | 28 | 4.04 MB | 1.05 MB | **-74%** |
 
 ### Phase 2: pakk git (v1.5)
 > **Hook:** *"Ton repo de 2GB → 800MB"*
