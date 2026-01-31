@@ -640,6 +640,7 @@ pakk({
 ## Roadmap
 
 ### Phase 1: pakk bundle (v1.0) - EN COURS
+> *-74% sur ton bundle, une ligne de config*
 
 - [x] Core compressor avec ZSTD + dictionnaires pré-entraînés
 - [x] 13 dictionnaires optimisés (JS, React, CSS, HTML, JSON, Go, Python, Rust, C, C++...)
@@ -660,6 +661,7 @@ pakk({
 | Next.js 16 + Turbopack | 28 | 4.04 MB | 1.05 MB | **-74%** |
 
 ### Phase 2: pakk git (v1.5)
+> *Ton repo de 2GB → 546MB*
 
 ```bash
 $ pakk git optimize
@@ -677,6 +679,7 @@ After:  546 MB (-74%)
 - [ ] Intégration GitHub Actions
 
 ### Phase 3: pakk install (v2.0)
+> *npm install, mais 74% plus léger*
 
 ```bash
 $ pakk install lodash
