@@ -102,20 +102,24 @@ jobs:
 
       - name: Test restore performance
         run: |
-          # Save original node_modules location
-          mv node_modules node_modules.bak
+          # Create a separate test directory for restore
+          mkdir -p /tmp/restore-test
 
-          # Measure restore time
+          # Copy the cache to test location
+          cp -r .pakk-cache /tmp/restore-test/
+
+          # Measure restore time (restore to a different path)
           echo "=== Restoring node_modules ==="
-          time node dist/cli/index.js cache restore --key "nm-test"
+          cd /tmp/restore-test
+          time node "$GITHUB_WORKSPACE/dist/cli/index.js" cache restore --key "nm-test"
 
           # Verify
           test -d node_modules
           ls node_modules | head -20
 
           # Cleanup
-          rm -rf node_modules
-          mv node_modules.bak node_modules
+          cd "$GITHUB_WORKSPACE"
+          rm -rf /tmp/restore-test
 
   benchmark-vs-tar:
     name: Benchmark vs tar+zstd
