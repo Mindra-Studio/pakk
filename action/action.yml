@@ -1,0 +1,52 @@
+name: 'PAKK Cache'
+description: 'High-performance CI/CD cache with ZSTD + dictionaries - 2x smaller than actions/cache'
+author: 'Mindra Studio'
+branding:
+  icon: 'archive'
+  color: 'orange'
+
+inputs:
+  path:
+    description: 'Path(s) to cache (newline-separated for multiple paths)'
+    required: true
+  key:
+    description: 'Cache key (use hashFiles for dependency-based keys)'
+    required: true
+  restore-keys:
+    description: 'Fallback keys for partial cache restore (newline-separated)'
+    required: false
+    default: ''
+  compression-level:
+    description: 'ZSTD compression level 1-19 (default: 6, optimal for CI/CD)'
+    required: false
+    default: '6'
+  fail-on-cache-miss:
+    description: 'Fail the workflow if cache is not found'
+    required: false
+    default: 'false'
+  lookup-only:
+    description: 'Check if cache exists without downloading'
+    required: false
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was restored (true/false)'
+  cache-matched-key:
+    description: 'The key that matched during restore'
+  original-size:
+    description: 'Original uncompressed size in bytes'
+  compressed-size:
+    description: 'Compressed size in bytes'
+  compression-ratio:
+    description: 'Compression ratio (0.24 = 24% of original)'
+  restore-time:
+    description: 'Time to restore cache in milliseconds'
+  save-time:
+    description: 'Time to save cache in milliseconds'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+  post: 'dist/index.js'
+  post-if: success()

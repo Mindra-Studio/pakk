@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample JavaScript files.
  *
  * Size: 1048576 bytes
- * Generated: 2026-01-31T16:08:29.422Z
+ * Generated: 2026-01-31T18:32:43.788Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

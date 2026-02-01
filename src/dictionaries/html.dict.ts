@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample HTML files.
  *
  * Size: 358563 bytes
- * Generated: 2026-01-31T16:08:29.428Z
+ * Generated: 2026-01-31T18:32:43.794Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

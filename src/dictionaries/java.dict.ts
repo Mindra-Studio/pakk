@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample Java files.
  *
  * Size: 70494 bytes
- * Generated: 2026-01-31T16:08:29.437Z
+ * Generated: 2026-01-31T18:32:43.807Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

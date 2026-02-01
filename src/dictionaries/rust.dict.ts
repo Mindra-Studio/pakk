@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample Rust files.
  *
  * Size: 379297 bytes
- * Generated: 2026-01-31T16:08:29.433Z
+ * Generated: 2026-01-31T18:32:43.802Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

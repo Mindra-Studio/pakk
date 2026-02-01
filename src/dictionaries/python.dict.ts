@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample Python files.
  *
  * Size: 524288 bytes
- * Generated: 2026-01-31T16:08:29.431Z
+ * Generated: 2026-01-31T18:32:43.798Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample React/Next.js files.
  *
  * Size: 524288 bytes
- * Generated: 2026-01-31T16:08:29.409Z
+ * Generated: 2026-01-31T18:32:43.774Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

@@ -16,6 +16,7 @@ export type DictionaryType =
   | 'java'
   | 'c'
   | 'cpp'
+  | 'node_modules'
   | 'auto';
 
 export type CompressionAlgorithm =

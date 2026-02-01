@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample TypeScript files.
  *
  * Size: 200920 bytes
- * Generated: 2026-01-31T16:08:29.419Z
+ * Generated: 2026-01-31T18:32:43.785Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

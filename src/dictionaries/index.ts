@@ -18,6 +18,7 @@ import { getJavaDictionary, JAVA_DICTIONARY_META } from './java.dict.js';
 import { getCDictionary, C_DICTIONARY_META } from './c.dict.js';
 import { getCppDictionary, CPP_DICTIONARY_META } from './cpp.dict.js';
 import { getHtmlDictionary, HTML_DICTIONARY_META } from './html.dict.js';
+import { getNodeModulesDictionary, NODE_MODULES_DICTIONARY_META } from './node_modules.dict.js';
 
 /**
  * Get dictionary buffer by type
@@ -50,6 +51,8 @@ export function getDictionary(type: DictionaryType): Buffer {
       return getCDictionary();
     case 'cpp':
       return getCppDictionary();
+    case 'node_modules':
+      return getNodeModulesDictionary();
     case 'auto':
     default:
       return getTypescriptDictionary(); // Default fallback
@@ -87,6 +90,8 @@ export function getDictionaryMeta(type: DictionaryType): DictionaryMeta {
       return C_DICTIONARY_META;
     case 'cpp':
       return CPP_DICTIONARY_META;
+    case 'node_modules':
+      return NODE_MODULES_DICTIONARY_META;
     case 'auto':
     default:
       return TYPESCRIPT_DICTIONARY_META;
@@ -110,6 +115,7 @@ export function getAllDictionaries(): DictionaryMeta[] {
     JAVA_DICTIONARY_META,
     C_DICTIONARY_META,
     CPP_DICTIONARY_META,
+    NODE_MODULES_DICTIONARY_META,
   ];
 }
 
@@ -590,11 +596,11 @@ function isC(text: string): boolean {
 function isJavaScriptOrTypeScript(text: string): boolean {
   // Strong JS/TS indicators (unique to JS/TS, not in Python/other)
   const strongJsPatterns = [
-    // ES6+ imports with quotes (Python uses no quotes)
-    /^import\s+.*\s+from\s+['"]/m,
-    /^import\s+\{[^}]+\}\s+from\s+['"]/m,
-    /^export\s+(default|const|function|class|type|interface)\s+/m,
-    /^export\s+\{/m,
+    // ES6+ imports with quotes (Python uses no quotes) - allow leading whitespace
+    /^\s*import\s+.*\s+from\s+['"]/m,
+    /^\s*import\s+\{[^}]+\}\s+from\s+['"]/m,
+    /^\s*export\s+(default|const|function|class|type|interface)\s+/m,
+    /^\s*export\s+\{/m,
     // JS-specific syntax
     /\bconst\s+\w+\s*=\s*\(/,           // const x = (
     /\blet\s+\w+\s*=\s*[\[{('"]/,       // let x = [ or { or ( or '/"
@@ -769,22 +775,24 @@ function isMinifiedJs(text: string): boolean {
 function isVue(text: string): boolean {
   const vuePatterns = [
     /__VUE__/,
+    /\bcreateApp\s*\(/,           // Vue 3 app creation
     /createVNode\(/,
     /createElementVNode\(/,
-    /defineComponent\(/,
-    /_createVNode\(/,
-    /_createElementVNode\(/,
-    /_resolveComponent\(/,
+    /defineComponent\s*\(/,
+    /_createVNode\s*\(/,
+    /_createElementVNode\s*\(/,
+    /_resolveComponent\s*\(/,
     /\bref\s*\(/,
     /\breactive\s*\(/,
     /\bcomputed\s*\(/,
-    /onMounted\s*\(/,
-    /onUnmounted\s*\(/,
-    /useRouter\s*\(\)/,
-    /useRoute\s*\(\)/,
+    /\bonMounted\s*\(/,
+    /\bonUnmounted\s*\(/,
+    /\buseRouter\s*\(\)/,
+    /\buseRoute\s*\(\)/,
     /defineNuxtConfig/,
-    /useFetch\s*\(/,
-    /useAsyncData\s*\(/,
+    /\buseFetch\s*\(/,
+    /\buseAsyncData\s*\(/,
+    /\bsetup\s*\(\s*\)\s*\{/,     // setup() { pattern
   ];
 
   let matches = 0;

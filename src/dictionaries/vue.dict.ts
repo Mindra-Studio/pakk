@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample Vue/Nuxt files.
  *
  * Size: 52464 bytes
- * Generated: 2026-01-31T16:08:29.418Z
+ * Generated: 2026-01-31T18:32:43.783Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

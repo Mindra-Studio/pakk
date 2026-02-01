@@ -6,3 +6,31 @@ coverage/
 .env.local
 *.tsbuildinfo
 trained-dicts/
+
+# Build output
+dist/
+
+# Cache directories
+.pakk-cache/
+.pakk-store/
+
+# Test directories
+test-perf/
+test-samples/
+test-dicts/
+benchmark-files/
+training-data/
+training-files.txt
+
+# IDE/Editor
+.claude/
+.vscode/
+.idea/
+
+# Windows artifacts
+nul
+Thumbs.db
+
+# Package manager locks (keep package-lock.json)
+bun.lockb
+pakk.lock

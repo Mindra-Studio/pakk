@@ -5,7 +5,7 @@
  * Trained using: zstd --train on sample JSON files.
  *
  * Size: 257721 bytes
- * Generated: 2026-01-31T16:08:29.429Z
+ * Generated: 2026-01-31T18:32:43.796Z
  */
 
 import type { DictionaryMeta } from '../core/types.js';

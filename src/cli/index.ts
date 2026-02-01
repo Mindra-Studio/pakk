@@ -7,6 +7,9 @@
  *   pakk compress <files...> [-d dict] [-l level] [-o output]
  *   pakk decompress <files...> [-d dict] [-o output]
  *   pakk bench <files...> [-d dict]
+ *   pakk cache <save|restore|list|clear> [options]
+ *   pakk install [options]
+ *   pakk store <status|prune|clear|path>
  *   pakk info
  *   pakk --help
  */
@@ -28,6 +31,8 @@ import {
   detectFromExtension,
 } from '../dictionaries/index.js';
 import type { DictionaryType } from '../core/types.js';
+import { commandCache } from './cache.js';
+import { commandInstall, commandStore, commandAdd, commandRemove } from './install.js';
 
 const VERSION = '1.0.0';
 
@@ -106,6 +111,11 @@ ${pc.bold('COMMANDS')}
   compress     Compress files with PAKK
   decompress   Decompress .pakk files
   bench        Benchmark compression algorithms
+  cache        CI/CD cache management (save/restore/list/clear)
+  install      Install npm packages with dictionary compression
+  add          Add packages to project (pakk add lodash)
+  remove       Remove packages from project (pakk rm lodash)
+  store        Manage PAKK package store
   info         Show dictionary information
 
 ${pc.bold('OPTIONS')}
@@ -132,6 +142,21 @@ ${pc.bold('EXAMPLES')}
 
   ${pc.dim('# Show dictionaries')}
   pakk info
+
+  ${pc.dim('# Install dependencies')}
+  pakk install
+
+  ${pc.dim('# Add a package')}
+  pakk add lodash
+
+  ${pc.dim('# Add dev dependency')}
+  pakk add -D typescript
+
+  ${pc.dim('# Remove a package')}
+  pakk rm lodash
+
+  ${pc.dim('# Show store status')}
+  pakk store status
 `);
 }
 
@@ -380,6 +405,32 @@ async function main() {
 
   if (args.options.version) {
     printVersion();
+    return;
+  }
+
+  // Handle commands with their own help/args parsing
+  if (args.command === 'cache') {
+    await commandCache(process.argv.slice(3));
+    return;
+  }
+
+  if (args.command === 'install' || args.command === 'i') {
+    await commandInstall(process.argv.slice(3));
+    return;
+  }
+
+  if (args.command === 'store') {
+    await commandStore(process.argv.slice(3));
+    return;
+  }
+
+  if (args.command === 'add' || args.command === 'a') {
+    await commandAdd(process.argv.slice(3));
+    return;
+  }
+
+  if (args.command === 'remove' || args.command === 'rm' || args.command === 'uninstall' || args.command === 'un') {
+    await commandRemove(process.argv.slice(3));
     return;
   }
 

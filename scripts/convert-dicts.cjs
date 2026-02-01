@@ -21,6 +21,7 @@ const dictionaries = [
   { file: 'java.dict', name: 'java', exportName: 'Java', description: 'Java', frameworks: ['java', 'spring', 'maven'] },
   { file: 'c.dict', name: 'c', exportName: 'C', description: 'C', frameworks: ['c'] },
   { file: 'cpp.dict', name: 'cpp', exportName: 'Cpp', description: 'C++', frameworks: ['cpp', 'c++', 'qt'] },
+  { file: 'node_modules.dict', name: 'node_modules', exportName: 'NodeModules', description: 'Node Modules (CI/CD)', frameworks: ['npm', 'node_modules', 'pnpm', 'yarn'] },
 ];
 
 for (const dict of dictionaries) {

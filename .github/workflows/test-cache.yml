@@ -1,0 +1,99 @@
+name: Test PAKK Cache
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  test-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Test PAKK Cache
+      - name: Restore cache with PAKK
+        id: pakk-cache
+        uses: ./action
+        with:
+          path: node_modules
+          key: pakk-test-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            pakk-test-${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.pakk-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Cache stats
+        if: always()
+        run: |
+          echo "Cache hit: ${{ steps.pakk-cache.outputs.cache-hit }}"
+          echo "Restore time: ${{ steps.pakk-cache.outputs.restore-time }}ms"
+          echo "Original size: ${{ steps.pakk-cache.outputs.original-size }}"
+          echo "Compressed size: ${{ steps.pakk-cache.outputs.compressed-size }}"
+          echo "Compression ratio: ${{ steps.pakk-cache.outputs.compression-ratio }}"
+
+  benchmark-vs-actions-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # First run: measure actions/cache
+      - name: Restore with actions/cache
+        id: actions-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: benchmark-actions-${{ hashFiles('package-lock.json') }}
+
+      - name: Install for actions/cache test
+        if: steps.actions-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Clear node_modules for PAKK test
+        run: rm -rf node_modules
+
+      # Second run: measure PAKK cache
+      - name: Restore with PAKK Cache
+        id: pakk-cache
+        uses: ./action
+        with:
+          path: node_modules
+          key: benchmark-pakk-${{ hashFiles('package-lock.json') }}
+
+      - name: Install for PAKK test
+        if: steps.pakk-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Benchmark results
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | actions/cache | PAKK Cache |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|---------------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Cache hit | ${{ steps.actions-cache.outputs.cache-hit }} | ${{ steps.pakk-cache.outputs.cache-hit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Compressed size | N/A | ${{ steps.pakk-cache.outputs.compressed-size }} bytes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Compression ratio | N/A | ${{ steps.pakk-cache.outputs.compression-ratio }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,164 @@
+name: Test PAKK Cache
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/cli/cache.ts'
+      - 'action/**'
+  pull_request:
+    paths:
+      - 'src/cli/cache.ts'
+      - 'action/**'
+  workflow_dispatch:
+
+jobs:
+  test-cache-cli:
+    name: Test CLI Cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test cache save
+        run: |
+          # Create test directory with sample files
+          mkdir -p test-cache-dir/src
+          echo '{"name":"test","dependencies":{"react":"^18"}}' > test-cache-dir/package.json
+          echo 'export const foo = "bar";' > test-cache-dir/src/index.ts
+          echo 'body { margin: 0; }' > test-cache-dir/src/style.css
+
+          # Save to cache
+          node dist/cli/index.js cache save test-cache-dir --key "test-cache-v1" --verbose
+
+          # Verify cache was created
+          test -d .pakk-cache
+          ls -la .pakk-cache/
+
+      - name: Test cache list
+        run: node dist/cli/index.js cache list
+
+      - name: Test cache restore
+        run: |
+          # Remove original
+          rm -rf test-cache-dir
+
+          # Restore from cache
+          node dist/cli/index.js cache restore --key "test-cache-v1" --verbose
+
+          # Verify files were restored
+          test -f test-cache-dir/package.json
+          test -f test-cache-dir/src/index.ts
+          test -f test-cache-dir/src/style.css
+
+          # Verify content
+          cat test-cache-dir/package.json
+
+      - name: Test cache clear
+        run: |
+          node dist/cli/index.js cache clear --key "test-cache-v1"
+          node dist/cli/index.js cache list
+
+  test-node-modules:
+    name: Test node_modules Cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Benchmark node_modules compression
+        run: |
+          echo "=== node_modules stats ==="
+          du -sh node_modules
+          find node_modules -type f | wc -l
+
+          echo ""
+          echo "=== Compressing with PAKK ==="
+          node dist/cli/index.js cache save node_modules --key "nm-test" --verbose
+
+          echo ""
+          echo "=== Cache size ==="
+          du -sh .pakk-cache/
+
+      - name: Test restore performance
+        run: |
+          # Save original node_modules location
+          mv node_modules node_modules.bak
+
+          # Measure restore time
+          echo "=== Restoring node_modules ==="
+          time node dist/cli/index.js cache restore --key "nm-test"
+
+          # Verify
+          test -d node_modules
+          ls node_modules | head -20
+
+          # Cleanup
+          rm -rf node_modules
+          mv node_modules.bak node_modules
+
+  benchmark-vs-tar:
+    name: Benchmark vs tar+zstd
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install zstd
+        run: sudo apt-get install -y zstd
+
+      - name: Benchmark comparison
+        run: |
+          echo "=== Original size ==="
+          du -sh node_modules
+
+          echo ""
+          echo "=== tar + gzip (actions/cache default) ==="
+          time tar czf nm-gzip.tar.gz node_modules
+          ls -lh nm-gzip.tar.gz
+
+          echo ""
+          echo "=== tar + zstd (actions/cache with zstd) ==="
+          time tar -I 'zstd -11' -cf nm-zstd.tar.zst node_modules
+          ls -lh nm-zstd.tar.zst
+
+          echo ""
+          echo "=== PAKK (with dictionaries) ==="
+          time node dist/cli/index.js cache save node_modules --key "bench"
+          du -sh .pakk-cache/
+
+          echo ""
+          echo "=== Summary ==="
+          echo "gzip:   $(ls -lh nm-gzip.tar.gz | awk '{print $5}')"
+          echo "zstd:   $(ls -lh nm-zstd.tar.zst | awk '{print $5}')"
+          echo "pakk:   $(du -sh .pakk-cache/ | awk '{print $1}')"
