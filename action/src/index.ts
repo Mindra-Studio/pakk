@@ -112,9 +112,11 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function toUnixPath(p: string): string {
+function toTarPath(p: string): string {
+  // Windows tar works fine with Windows paths, no conversion needed
+  // Only convert backslashes to forward slashes for consistency
   if (IS_WINDOWS) {
-    return p.replace(/\\/g, '/').replace(/^([A-Za-z]):/, '/$1');
+    return p.replace(/\\/g, '/');
   }
   return p;
 }
@@ -166,12 +168,12 @@ async function createTarArchive(
   sourcePaths: string[],
   outputPath: string
 ): Promise<void> {
-  const args: string[] = ['-cf', toUnixPath(outputPath)];
+  const args: string[] = ['-cf', toTarPath(outputPath)];
 
   for (const p of sourcePaths) {
     const dir = path.dirname(p);
     const name = path.basename(p);
-    args.push('-C', toUnixPath(dir), name);
+    args.push('-C', toTarPath(dir), name);
   }
 
   core.debug(`tar ${args.join(' ')}`);
@@ -188,7 +190,7 @@ async function extractTarArchive(
   archivePath: string,
   outputDir: string
 ): Promise<void> {
-  const args = ['-xf', toUnixPath(archivePath), '-C', toUnixPath(outputDir)];
+  const args = ['-xf', toTarPath(archivePath), '-C', toTarPath(outputDir)];
 
   core.debug(`tar ${args.join(' ')}`);
 
