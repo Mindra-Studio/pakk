@@ -921,7 +921,7 @@ export async function commandCache(args: string[]): Promise<void> {
       });
       break;
 
-    case 'restore':
+    case 'restore': {
       if (!parsed.key) {
         console.error(pc.red('Error: --key is required for restore'));
         process.exit(1);
@@ -935,6 +935,7 @@ export async function commandCache(args: string[]): Promise<void> {
         process.exit(1);
       }
       break;
+    }
 
     case 'list':
       await cacheList(parsed.cacheDir ? { cacheDir: parsed.cacheDir } : {});

@@ -108,7 +108,7 @@ export function pakk(userOptions: PakkEsbuildOptions = {}): Plugin {
         const { writeFileSync, readFileSync, readdirSync, statSync, existsSync } = await import('node:fs');
         const { join, extname, relative } = await import('node:path');
 
-        let filesToCompress: Array<{ path: string; content: Buffer }> = [];
+        const filesToCompress: Array<{ path: string; content: Buffer }> = [];
 
         if (hasOutputFiles && result.outputFiles) {
           // If write: false, use outputFiles

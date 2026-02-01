@@ -33,6 +33,8 @@ import { Pool, request } from 'undici';
 import * as tar from 'tar';
 // Performance: fflate is 60% faster than zlib
 import { gunzipSync } from 'fflate';
+// Fallback for fflate
+import { gunzipSync as zlibGunzip } from 'node:zlib';
 
 const IS_WINDOWS = platform() === 'win32';
 const IS_MACOS = platform() === 'darwin';
@@ -251,7 +253,6 @@ function decompressGzip(data: Buffer): Buffer {
     return Buffer.from(gunzipSync(new Uint8Array(data)));
   } catch {
     // Fallback to Node's zlib if fflate fails
-    const { gunzipSync: zlibGunzip } = require('zlib');
     return zlibGunzip(data);
   }
 }
@@ -515,7 +516,7 @@ async function install(projectDir: string, options: InstallOptions = {}): Promis
   let downloadCount = 0;
   let cachedCount = 0;
   let totalDownloaded = 0;
-  let totalExtracted = 0;
+  let _totalExtracted = 0;
 
   console.log(`  ${pc.cyan('→')} Fetching packages...`);
 
@@ -548,7 +549,7 @@ async function install(projectDir: string, options: InstallOptions = {}): Promis
         // OPTIMIZED: Download + decompress + extract in one pipeline
         const { downloadSize, extractedSize } = await downloadAndExtract(pkg.tarballUrl, extractDir);
         totalDownloaded += downloadSize;
-        totalExtracted += extractedSize;
+        _totalExtracted += extractedSize;
 
         // Update store index
         if (!storeIndex.packages[pkg.name]) {

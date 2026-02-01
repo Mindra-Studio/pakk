@@ -603,9 +603,9 @@ function isJavaScriptOrTypeScript(text: string): boolean {
     /^\s*export\s+\{/m,
     // JS-specific syntax
     /\bconst\s+\w+\s*=\s*\(/,           // const x = (
-    /\blet\s+\w+\s*=\s*[\[{('"]/,       // let x = [ or { or ( or '/"
+    /\blet\s+\w+\s*=\s*[[{('"]/,        // let x = [ or { or ( or '/"
     /\bvar\s+\w+\s*=/,                   // var (not in modern languages)
-    /=>\s*[\{(]/,                        // arrow functions
+    /=>\s*[{(]/,                         // arrow functions
     /\bfunction\s*\*?\s*\w*\s*\([^)]*\)\s*\{/,  // function declarations
     /\bclass\s+\w+\s*(extends\s+\w+\s*)?\{/,    // class without colon
     // TypeScript specific
@@ -729,7 +729,7 @@ function isMinifiedJs(text: string): boolean {
 
   // IIFE patterns
   const iifePatterns = [
-    /^\s*[\!\(]function\s*\(/,
+    /^\s*[!(]function\s*\(/,
     /^\s*\(function\s*\(\w?,?\w?,?\w?\)\s*\{/,
     /^\s*\(\s*\(\s*\)\s*=>\s*\{/,
     /^\s*\(\s*function\s*\(\s*\)\s*\{/,
