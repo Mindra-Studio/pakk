@@ -7,8 +7,8 @@ coverage/
 *.tsbuildinfo
 trained-dicts/
 
-# Build output
-dist/
+# Build output (main dist, not action dist)
+/dist/
 
 # Cache directories
 .pakk-cache/
