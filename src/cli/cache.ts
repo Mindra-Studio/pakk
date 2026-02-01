@@ -16,16 +16,12 @@ import {
   mkdirSync,
   readdirSync,
   statSync,
-  createWriteStream,
-  createReadStream,
   readFileSync,
   writeFileSync,
   unlinkSync,
 } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { pipeline } from 'node:stream/promises';
-import { Transform, PassThrough } from 'node:stream';
 import { spawn } from 'node:child_process';
 import pc from 'picocolors';
 import { formatBytes, hasZstd } from '../core/compressor.js';
@@ -270,14 +266,14 @@ async function compressWithZstdDict(
           console.log(`  ${pc.dim(`Using dictionary: ${dictName}`)}`);
         }
       } else {
-        compressed = zstd.compress(inputData, level);
+        compressed = zstd.compress(inputData, { compressionLevel: level });
       }
     } catch {
       // Fallback to no dictionary
-      compressed = zstd.compress(inputData, level);
+      compressed = zstd.compress(inputData, { compressionLevel: level });
     }
   } else {
-    compressed = zstd.compress(inputData, level);
+    compressed = zstd.compress(inputData, { compressionLevel: level });
   }
 
   writeFileSync(outputPath, compressed);
@@ -819,17 +815,21 @@ export function parseCacheArgs(args: string[]): CacheArgs {
     const arg = args[i]!;
 
     if (arg === '-k' || arg === '--key') {
-      result.key = args[++i];
+      const val = args[++i];
+      if (val) result.key = val;
     } else if (arg === '-c' || arg === '--cache-dir') {
-      result.cacheDir = args[++i];
+      const val = args[++i];
+      if (val) result.cacheDir = val;
     } else if (arg === '-o' || arg === '--output') {
-      result.outputDir = args[++i];
+      const val = args[++i];
+      if (val) result.outputDir = val;
     } else if (arg === '-v' || arg === '--verbose') {
       result.verbose = true;
     } else if (arg === '-l' || arg === '--level') {
       result.level = parseInt(args[++i] ?? '6', 10);
     } else if (arg === '-d' || arg === '--dictionary') {
-      result.dictionary = args[++i];
+      const val = args[++i];
+      if (val) result.dictionary = val;
     } else if (!arg.startsWith('-')) {
       result.paths.push(arg);
     }
@@ -914,10 +914,10 @@ export async function commandCache(args: string[]): Promise<void> {
         process.exit(1);
       }
       await cacheSave(parsed.paths, parsed.key, {
-        cacheDir: parsed.cacheDir,
-        verbose: parsed.verbose,
-        level: parsed.level,
-        dictionary: parsed.dictionary,
+        ...(parsed.cacheDir && { cacheDir: parsed.cacheDir }),
+        ...(parsed.verbose && { verbose: parsed.verbose }),
+        ...(parsed.level && { level: parsed.level }),
+        ...(parsed.dictionary && { dictionary: parsed.dictionary }),
       });
       break;
 
@@ -927,9 +927,9 @@ export async function commandCache(args: string[]): Promise<void> {
         process.exit(1);
       }
       const result = await cacheRestore(parsed.key, {
-        cacheDir: parsed.cacheDir,
-        outputDir: parsed.outputDir,
-        verbose: parsed.verbose,
+        ...(parsed.cacheDir && { cacheDir: parsed.cacheDir }),
+        ...(parsed.outputDir && { outputDir: parsed.outputDir }),
+        ...(parsed.verbose && { verbose: parsed.verbose }),
       });
       if (!result.restored) {
         process.exit(1);
@@ -937,11 +937,11 @@ export async function commandCache(args: string[]): Promise<void> {
       break;
 
     case 'list':
-      await cacheList({ cacheDir: parsed.cacheDir });
+      await cacheList(parsed.cacheDir ? { cacheDir: parsed.cacheDir } : {});
       break;
 
     case 'clear':
-      await cacheClear(parsed.key, { cacheDir: parsed.cacheDir });
+      await cacheClear(parsed.key, parsed.cacheDir ? { cacheDir: parsed.cacheDir } : {});
       break;
 
     default:

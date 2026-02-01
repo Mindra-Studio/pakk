@@ -15,7 +15,7 @@
  */
 
 import { readFileSync, writeFileSync, statSync, existsSync, readdirSync } from 'node:fs';
-import { basename, extname, join, dirname } from 'node:path';
+import { basename, join, dirname } from 'node:path';
 import pc from 'picocolors';
 import {
   compress,
@@ -27,7 +27,6 @@ import {
 } from '../core/compressor.js';
 import {
   getAllDictionaries,
-  getDictionaryMeta,
   detectFromExtension,
 } from '../dictionaries/index.js';
 import type { DictionaryType } from '../core/types.js';
@@ -77,11 +76,13 @@ function parseArgs(args: string[]): ParsedArgs {
     const arg = args[i]!;
 
     if (arg === '-d' || arg === '--dictionary') {
-      result.options.dictionary = args[++i] as DictionaryType;
+      const val = args[++i];
+      if (val) result.options.dictionary = val as DictionaryType;
     } else if (arg === '-l' || arg === '--level') {
       result.options.level = parseInt(args[++i] ?? '11', 10);
     } else if (arg === '-o' || arg === '--output') {
-      result.options.output = args[++i];
+      const val = args[++i];
+      if (val) result.options.output = val;
     } else if (arg === '-r' || arg === '--recursive') {
       result.options.recursive = true;
     } else if (arg === '-v' || arg === '--verbose') {
@@ -248,9 +249,9 @@ async function commandDecompress(files: string[], options: ParsedArgs['options']
 
       const content = readFileSync(filePath);
 
-      const result = await decompress(content, {
-        dictionary: options.dictionary,
-      });
+      const result = await decompress(content,
+        options.dictionary ? { dictionary: options.dictionary } : {}
+      );
 
       // Remove .pakk extension or add .out
       let outputPath: string;
@@ -299,9 +300,9 @@ async function commandBench(files: string[], options: ParsedArgs['options']) {
       const content = readFileSync(filePath);
       const dict = options.dictionary ?? detectFromExtension(filePath);
 
-      const result = await benchmark(basename(filePath), content, {
-        dictionary: dict === 'auto' ? undefined : dict,
-      });
+      const result = await benchmark(basename(filePath), content,
+        dict && dict !== 'auto' ? { dictionary: dict } : {}
+      );
 
       console.log(formatBenchmark(result));
     } catch (error) {

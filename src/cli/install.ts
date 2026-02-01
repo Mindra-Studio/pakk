@@ -21,15 +21,10 @@ import {
   symlinkSync,
   linkSync,
   rmSync,
-  createWriteStream,
-  statSync,
 } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { homedir, platform, cpus } from 'node:os';
 import { createHash } from 'node:crypto';
-import { pipeline } from 'node:stream/promises';
-import { Readable } from 'node:stream';
-import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import pc from 'picocolors';
 
 // Performance: undici is 3x faster than fetch
@@ -355,49 +350,6 @@ async function resolveDependencies(
   }
 }
 
-// Compression with PAKK dictionary
-async function compressPackage(tarData: Buffer, outputPath: string): Promise<{ compressed: number; original: number }> {
-  const original = tarData.length;
-
-  try {
-    const zstd = await import('zstd-napi');
-
-    let dict: Buffer | null = null;
-    const dictPath = join(DICTS_DIR, 'node_modules.dict');
-
-    if (existsSync(dictPath)) {
-      dict = readFileSync(dictPath);
-    } else {
-      try {
-        const { getDictionary } = await import('../dictionaries/index.js');
-        dict = getDictionary('node_modules');
-        if (dict) {
-          writeFileSync(dictPath, dict);
-        }
-      } catch {
-        // Dictionary not available
-      }
-    }
-
-    let compressed: Buffer;
-
-    if (dict && dict.length > 0) {
-      const compressor = new (zstd as any).Compressor();
-      compressor.setParameters({ compressionLevel: 11 } as any);
-      compressor.loadDictionary(dict);
-      compressed = compressor.compress(tarData);
-    } else {
-      compressed = (zstd as any).compress(tarData, 11);
-    }
-
-    writeFileSync(outputPath, compressed);
-    return { compressed: compressed.length, original };
-  } catch {
-    writeFileSync(outputPath, tarData);
-    return { compressed: original, original };
-  }
-}
-
 // Linking strategies
 function detectLinkMode(): 'hardlink' | 'symlink' | 'copy' {
   return 'hardlink';
@@ -449,7 +401,6 @@ function createVirtualStore(
   mkdirSync(virtualStoreDir, { recursive: true });
 
   for (const [name, pkg] of packages) {
-    const hash = hashPackage(name, pkg.version);
     const storeEntry = storeIndex.packages[name]?.versions[pkg.version];
 
     if (!storeEntry?.extractedPath || !existsSync(storeEntry.extractedPath)) {
@@ -592,7 +543,6 @@ async function install(projectDir: string, options: InstallOptions = {}): Promis
     await Promise.all(batch.map(async pkg => {
       try {
         const hash = hashPackage(pkg.name, pkg.version);
-        const compressedPath = join(TARBALLS_DIR, `${hash}.pakk`);
         const extractDir = getPackageDir(hash);
 
         // OPTIMIZED: Download + decompress + extract in one pipeline
@@ -604,7 +554,7 @@ async function install(projectDir: string, options: InstallOptions = {}): Promis
         if (!storeIndex.packages[pkg.name]) {
           storeIndex.packages[pkg.name] = { versions: {} };
         }
-        storeIndex.packages[pkg.name].versions[pkg.version] = {
+        storeIndex.packages[pkg.name]!.versions[pkg.version] = {
           integrity: pkg.integrity,
           compressedSize: downloadSize,
           originalSize: extractedSize,
@@ -615,7 +565,6 @@ async function install(projectDir: string, options: InstallOptions = {}): Promis
         downloadCount++;
 
         if (options.verbose) {
-          const ratio = Math.round((1 - downloadSize / extractedSize) * 100);
           console.log(`    ${pc.green('+')} ${pkg.name}@${pkg.version} ${pc.dim(`(${formatBytes(downloadSize)} → ${formatBytes(extractedSize)})`)}`);
         } else {
           process.stdout.write(`\r  ${pc.cyan('→')} Downloaded ${downloadCount}/${toDownload.length}...`);
@@ -701,10 +650,12 @@ export async function commandInstall(args: string[]): Promise<void> {
     else if (arg === '--production' || arg === '-P') options.production = true;
     else if (arg === '--frozen' || arg === '-F') options.frozen = true;
     else if (arg === '--verbose' || arg === '-v') options.verbose = true;
-    else if (arg === '--parallel' && args[i + 1]) {
-      options.parallel = parseInt(args[++i], 10);
-    } else if (arg === '--link-mode' && args[i + 1]) {
-      options.linkMode = args[++i] as any;
+    else if (arg === '--parallel') {
+      const val = args[++i];
+      if (val) options.parallel = parseInt(val, 10);
+    } else if (arg === '--link-mode') {
+      const val = args[++i];
+      if (val) options.linkMode = val as 'hardlink' | 'symlink' | 'copy';
     }
   }
 
@@ -877,7 +828,7 @@ export async function commandAdd(args: string[]): Promise<void> {
   let verbose = false;
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg = args[i]!;
     if (arg === '--help' || arg === '-h') showHelp = true;
     else if (arg === '--dev' || arg === '-D') isDev = true;
     else if (arg === '--verbose' || arg === '-v') verbose = true;
@@ -988,7 +939,7 @@ export async function commandRemove(args: string[]): Promise<void> {
   let showHelp = false;
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg = args[i]!;
     if (arg === '--help' || arg === '-h') showHelp = true;
     else if (!arg.startsWith('-')) packages.push(arg);
   }
